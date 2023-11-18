@@ -140,7 +140,7 @@ func main() {
 			printFormatted(yellow, "Difference:\n%s", diffText)
 	
 			// Prompt the user to update the startup
-			fmt.Print("Do you want to update the startup for this server? (y/n): ")
+			fmt.Print("Do you want to update the startup for this server? (y/n/A): ")
 			var updateChoice string
 			fmt.Scanln(&updateChoice)
 	
@@ -152,9 +152,19 @@ func main() {
 					log.Fatal("Error updating startup for server:", err)
 				}
 				printFormatted(green, "Startup updated for server with UUID Short %s\n", uuidShort)
+			} else if updateChoice == "A" || updateChoice == "a" {
+				// Update the startup for all subsequent servers
+				updateQuery := "UPDATE servers SET startup = ? WHERE egg_id = ? AND startup != ?"
+				_, err := db.Exec(updateQuery, eggStartup, eggID, eggStartup)
+				if err != nil {
+					log.Fatal("Error updating startup for servers:", err)
+				}
+				printFormatted(green, "Startup updated for all subsequent servers with Egg ID %s\n", eggID)
+				break // Exit the loop after updating all servers
 			}
 		}
 	}
+	
 	// Exit the program after processing rows
 	os.Exit(0)
 	// Wait for user input or signal to exit
