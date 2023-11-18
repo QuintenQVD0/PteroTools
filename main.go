@@ -58,15 +58,15 @@ func main() {
 	}()
 
 	// Prompt for MySQL connection details
-	host := GetUserInput("Enter MySQL host: ", "10.0.0.36")
-	port := GetUserInput("Enter MySQL port: ", "3306")
-	user := GetUserInput("Enter MySQL username: ", "pterodactyl2")
+	host := GetUserInput("Enter MySQL host ", "127.0.0.1")
+	port := GetUserInput("Enter MySQL port ", "3306")
+	user := GetUserInput("Enter MySQL username ", "pterodactyl")
 
 	// Prompt for MySQL password
 	password := GetPasswordInput("Enter MySQL password: ")
 
 	// Prompt for Pterodactyl database name
-	pterodactylDBName := GetUserInput("Enter Pterodactyl database name (default: panel): ", "panel")
+	pterodactylDBName := GetUserInput("Enter Pterodactyl database name ", "panel")
 
 	// Build the MySQL DSN (Data Source Name)
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, pterodactylDBName)
@@ -192,7 +192,7 @@ func GetUserInput(prompt, defaultValue string) string {
 
 	// Set default value
 	if defaultValue != "" {
-		fmt.Printf("(default: %s) ", defaultValue)
+		fmt.Printf("(default: %s): ", defaultValue)
 	}
 
 	// Read user input
