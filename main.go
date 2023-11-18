@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pmezard/go-difflib/difflib"
@@ -30,7 +32,6 @@ func init() {
 	}
 }
 
-
 var (
 	version   = "1.0.0"
 	green  = "\033[32m"
@@ -45,11 +46,21 @@ var (
 func main() {
 
 	printCopyright("QuintenQVD0")
+	
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-sigCh
+		// Handle cleanup or other tasks before exiting
+		fmt.Println("\nTerminating the application...")
+		os.Exit(0)
+	}()
 
 	// Prompt for MySQL connection details
-	host := GetUserInput("Enter MySQL host (default: 127.0.0.1): ", "10.0.0.36")
-	port := GetUserInput("Enter MySQL port (default: 3306): ", "3306")
-	user := GetUserInput("Enter MySQL username (default: pterodactyl): ", "pterodactyl2")
+	host := GetUserInput("Enter MySQL host: ", "10.0.0.36")
+	port := GetUserInput("Enter MySQL port: ", "3306")
+	user := GetUserInput("Enter MySQL username: ", "pterodactyl2")
 
 	// Prompt for MySQL password
 	password := GetPasswordInput("Enter MySQL password: ")
@@ -91,7 +102,7 @@ func main() {
 		log.Fatal("Error retrieving startup value from eggs table:", err)
 	}
 
-	fmt.Printf("\nStartup value for Egg ID %s (from eggs table): %s\n", eggID, eggStartup)
+	fmt.Printf("\nStartup value for Egg ID %s: %s\n", eggID, eggStartup)
 
 	// Query servers with the specified egg ID
 	serverQuery := "SELECT uuidShort, name, startup FROM servers WHERE egg_id = ?"
@@ -109,13 +120,13 @@ func main() {
 		if err := rows.Scan(&uuidShort, &name, &serverStartup); err != nil {
 			log.Fatal("Error scanning row:", err)
 		}
-
+	
 		// Compare startup value from eggs table with startup value from servers table
 		if eggStartup == serverStartup {
 			printFormatted(green, "UUID Short: %s, Name: %s, Startup Matches\n", uuidShort, name)
 		} else {
 			printFormatted(red, "UUID Short: %s, Name: %s, Startup Mismatch\n", uuidShort, name)
-
+	
 			// Show the difference between eggStartup and serverStartup
 			diff := difflib.UnifiedDiff{
 				A:        difflib.SplitLines(eggStartup),
@@ -124,15 +135,15 @@ func main() {
 				ToFile:   "Server Startup",
 				Context:  3,
 			}
-
+	
 			diffText, _ := difflib.GetUnifiedDiffString(diff)
 			printFormatted(yellow, "Difference:\n%s", diffText)
-
+	
 			// Prompt the user to update the startup
 			fmt.Print("Do you want to update the startup for this server? (y/n): ")
 			var updateChoice string
 			fmt.Scanln(&updateChoice)
-
+	
 			if updateChoice == "y" || updateChoice == "Y" {
 				// Update the startup for the server with the latest one from the egg
 				updateQuery := "UPDATE servers SET startup = ? WHERE uuidShort = ?"
@@ -144,6 +155,10 @@ func main() {
 			}
 		}
 	}
+	// Exit the program after processing rows
+	os.Exit(0)
+	// Wait for user input or signal to exit
+	select {}
 }
 
 // printFormatted prints a formatted string with color (if enabled)
