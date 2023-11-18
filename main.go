@@ -10,23 +10,42 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pmezard/go-difflib/difflib"
 	"golang.org/x/crypto/ssh/terminal"
+	"github.com/common-nighthawk/go-figure"
 )
 
-var noColor bool
-
 func init() {
+	flag.BoolVar(&showUsage, "h", false, "Show usage information")
 	flag.BoolVar(&noColor, "no-color", false, "Disable colorized output")
+	flag.BoolVar(&showVersion, "version", false, "Show version information")
 	flag.Parse()
+
+	if showVersion {
+		printVersion()
+		os.Exit(0)
+	}
+
+	if showUsage {
+		flag.Usage()
+		os.Exit(0)
+	}
 }
 
+
 var (
+	version   = "1.0.0"
 	green  = "\033[32m"
 	red    = "\033[31m"
 	yellow = "\033[33m"
 	reset  = "\033[0m"
+	showUsage bool
+	noColor   bool
+	showVersion bool
 )
 
 func main() {
+
+	printCopyright("QuintenQVD0")
+
 	// Prompt for MySQL connection details
 	host := GetUserInput("Enter MySQL host (default: 127.0.0.1): ", "10.0.0.36")
 	port := GetUserInput("Enter MySQL port (default: 3306): ", "3306")
@@ -136,6 +155,12 @@ func printFormatted(colorCode, format string, a ...interface{}) {
 	}
 }
 
+// Print Copyright
+func printCopyright(text string) {
+	figure.NewFigure(text, "", true).Print()
+	fmt.Println()
+}
+
 // GetUserInput prompts the user for input with a given prompt and provides a default value.
 func GetUserInput(prompt, defaultValue string) string {
 	fmt.Print(prompt)
@@ -171,4 +196,8 @@ func GetPasswordInput(prompt string) string {
 	fmt.Println()
 
 	return string(password)
+}
+
+func printVersion() {
+	fmt.Printf("Version %s\n", version)
 }
