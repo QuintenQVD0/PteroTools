@@ -2,20 +2,35 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"golang.org/x/crypto/ssh/terminal"
 	"github.com/pmezard/go-difflib/difflib"
+	"golang.org/x/crypto/ssh/terminal"
+)
+
+var noColor bool
+
+func init() {
+	flag.BoolVar(&noColor, "no-color", false, "Disable colorized output")
+	flag.Parse()
+}
+
+var (
+	green  = "\033[32m"
+	red    = "\033[31m"
+	yellow = "\033[33m"
+	reset  = "\033[0m"
 )
 
 func main() {
 	// Prompt for MySQL connection details
-	host := GetUserInput("Enter MySQL host (default: 127.0.0.1): ", "127.0.0.1")
+	host := GetUserInput("Enter MySQL host (default: 127.0.0.1): ", "10.0.0.36")
 	port := GetUserInput("Enter MySQL port (default: 3306): ", "3306")
-	user := GetUserInput("Enter MySQL username (default: pterodactyl): ", "pterodactyl")
+	user := GetUserInput("Enter MySQL username (default: pterodactyl): ", "pterodactyl2")
 
 	// Prompt for MySQL password
 	password := GetPasswordInput("Enter MySQL password: ")
@@ -39,7 +54,11 @@ func main() {
 		log.Fatal("Error pinging MySQL server:", err)
 	}
 
-	fmt.Println("Connected to MySQL server successfully!")
+	if noColor {
+		fmt.Println("Connected to MySQL server successfully!")
+	} else {
+		printFormatted(green, "Connected to MySQL server successfully!\n")
+	}
 
 	// Prompt for egg ID
 	eggID := GetUserInput("Enter egg ID: ", "")
@@ -74,9 +93,9 @@ func main() {
 
 		// Compare startup value from eggs table with startup value from servers table
 		if eggStartup == serverStartup {
-			fmt.Printf("UUID Short: %s, Name: %s, Startup Matches\n", uuidShort, name)
+			printFormatted(green, "UUID Short: %s, Name: %s, Startup Matches\n", uuidShort, name)
 		} else {
-			fmt.Printf("UUID Short: %s, Name: %s, Startup Mismatch\n", uuidShort, name)
+			printFormatted(red, "UUID Short: %s, Name: %s, Startup Mismatch\n", uuidShort, name)
 
 			// Show the difference between eggStartup and serverStartup
 			diff := difflib.UnifiedDiff{
@@ -88,7 +107,7 @@ func main() {
 			}
 
 			diffText, _ := difflib.GetUnifiedDiffString(diff)
-			fmt.Println("Difference:\n", diffText)
+			printFormatted(yellow, "Difference:\n%s", diffText)
 
 			// Prompt the user to update the startup
 			fmt.Print("Do you want to update the startup for this server? (y/n): ")
@@ -102,12 +121,20 @@ func main() {
 				if err != nil {
 					log.Fatal("Error updating startup for server:", err)
 				}
-				fmt.Printf("Startup updated for server with UUID Short %s\n", uuidShort)
+				printFormatted(green, "Startup updated for server with UUID Short %s\n", uuidShort)
 			}
 		}
 	}
 }
 
+// printFormatted prints a formatted string with color (if enabled)
+func printFormatted(colorCode, format string, a ...interface{}) {
+	if noColor {
+		fmt.Printf(format, a...)
+	} else {
+		fmt.Printf(colorCode+format+reset, a...)
+	}
+}
 
 // GetUserInput prompts the user for input with a given prompt and provides a default value.
 func GetUserInput(prompt, defaultValue string) string {
