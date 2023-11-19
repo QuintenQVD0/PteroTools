@@ -23,3 +23,6 @@ This is a very simple Golang application that connects to the Pterodactyl panel 
 - `github.com/common-nighthawk/go-figure` for printing the ASCII text at the top
 
 ## Images
+
+![](./img/img1.PNG)
+![](./img/img2.PNG)
