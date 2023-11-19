@@ -24,5 +24,6 @@ This is a very simple Golang application that connects to the Pterodactyl panel 
 
 ## Images
 
+![](./img/img3.PNG)
 ![](./img/img1.PNG)
 ![](./img/img2.PNG)
