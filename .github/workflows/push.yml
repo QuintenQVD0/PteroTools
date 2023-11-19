@@ -1,0 +1,58 @@
+name: Push
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+        go: ["1.21.4"]
+        goos: [linux, windows]
+        goarch: [amd64, arm64]
+
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: go mod download
+        env:
+          CGO_ENABLED: 0
+        run: |
+          go mod download
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -v -trimpath -o dist/pssu-${{ matrix.go }}-${{ matrix.goarch }}
+          chmod 755 dist/*
+
+      # - name: Upload Release Artifact
+      #   uses: actions/upload-artifact@v3
+      #   if: ${{ github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' }}
+      #   with:
+      #     name: wings_linux_${{ matrix.goarch }}
+      #     path: dist/pssu
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pssu-${{ matrix.go }}-${{ matrix.goarch }}
+          path: dist/pssu-${{ matrix.go }}-${{ matrix.goarch }}
