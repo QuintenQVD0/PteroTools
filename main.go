@@ -33,7 +33,7 @@ func init() {
 }
 
 var (
-	version   = "1.0.0"
+	version   = "1.0.1-dev"
 	green  = "\033[32m"
 	red    = "\033[31m"
 	yellow = "\033[33m"
@@ -57,120 +57,148 @@ func main() {
 		os.Exit(0)
 	}()
 
-	// Prompt for MySQL connection details
-	host := GetUserInput("Enter MySQL host ", "127.0.0.1")
-	port := GetUserInput("Enter MySQL port ", "3306")
-	user := GetUserInput("Enter MySQL username ", "pterodactyl")
+	for {
+		fmt.Println("Select an option:")
+		fmt.Println("1. Update the startup of already made servers to the egg startup")
+		fmt.Println("2. WIP")
+		fmt.Println("3. Exit")
 
-	// Prompt for MySQL password
-	password := GetPasswordInput("Enter MySQL password: ")
+		var choice int
+		fmt.Print("Enter your choice: ")
+		fmt.Scan(&choice)
+		
+		// Consume the newline character
+		fmt.Scanln()
 
-	// Prompt for Pterodactyl database name
-	pterodactylDBName := GetUserInput("Enter Pterodactyl database name ", "panel")
-
-	// Build the MySQL DSN (Data Source Name)
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, pterodactylDBName)
-
-	// Connect to MySQL
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		log.Fatal("Error connecting to MySQL:", err)
-	}
-	defer db.Close()
-
-	// Check if the connection is successful
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("Error pinging MySQL server:", err)
-	}
-
-	if noColor {
-		fmt.Println("Connected to MySQL server successfully!")
-	} else {
-		printFormatted(green, "Connected to MySQL server successfully!\n")
-	}
-
-	// Prompt for egg ID
-	eggID := GetUserInput("Enter egg ID: ", "")
-
-	// Query the startup field for the specified egg ID from the eggs table
-	eggQuery := "SELECT startup FROM eggs WHERE id = ?"
-
-	var eggStartup string
-	err = db.QueryRow(eggQuery, eggID).Scan(&eggStartup)
-	if err != nil {
-		log.Fatal("Error retrieving startup value from eggs table:", err)
-	}
-
-	fmt.Printf("\nStartup value for Egg ID %s: %s\n", eggID, eggStartup)
-
-	// Query servers with the specified egg ID
-	serverQuery := "SELECT uuidShort, name, startup FROM servers WHERE egg_id = ?"
-
-	rows, err := db.Query(serverQuery, eggID)
-	if err != nil {
-		log.Fatal("Error querying servers:", err)
-	}
-	defer rows.Close()
-
-	fmt.Printf("Servers using Egg ID %s:\n\n", eggID)
-
-	for rows.Next() {
-		var uuidShort, name, serverStartup string
-		if err := rows.Scan(&uuidShort, &name, &serverStartup); err != nil {
-			log.Fatal("Error scanning row:", err)
-		}
-	
-		// Compare startup value from eggs table with startup value from servers table
-		if eggStartup == serverStartup {
-			printFormatted(green, "UUID Short: %s, Name: %s, Startup Matches\n", uuidShort, name)
-		} else {
-			printFormatted(red, "UUID Short: %s, Name: %s, Startup Mismatch\n", uuidShort, name)
-	
-			// Show the difference between eggStartup and serverStartup
-			diff := difflib.UnifiedDiff{
-				A:        difflib.SplitLines(eggStartup),
-				B:        difflib.SplitLines(serverStartup),
-				FromFile: "Egg Startup",
-				ToFile:   "Server Startup",
-				Context:  3,
-			}
-	
-			diffText, _ := difflib.GetUnifiedDiffString(diff)
-			printFormatted(yellow, "Difference:\n%s", diffText)
-	
-			// Prompt the user to update the startup
-			fmt.Print("Do you want to update the startup for this server? (y/n/A): ")
-			var updateChoice string
-			fmt.Scanln(&updateChoice)
-	
-			if updateChoice == "y" || updateChoice == "Y" {
-				// Update the startup for the server with the latest one from the egg
-				updateQuery := "UPDATE servers SET startup = ? WHERE uuidShort = ?"
-				_, err := db.Exec(updateQuery, eggStartup, uuidShort)
-				if err != nil {
-					log.Fatal("Error updating startup for server:", err)
-				}
-				printFormatted(green, "Startup updated for server with UUID Short %s\n", uuidShort)
-			} else if updateChoice == "A" || updateChoice == "a" {
-				// Update the startup for all subsequent servers
-				updateQuery := "UPDATE servers SET startup = ? WHERE egg_id = ? AND startup != ?"
-				_, err := db.Exec(updateQuery, eggStartup, eggID, eggStartup)
-				if err != nil {
-					log.Fatal("Error updating startup for servers:", err)
-				}
-				printFormatted(green, "Startup updated for all subsequent servers with Egg ID %s\n", eggID)
-				break // Exit the loop after updating all servers
-			}
+		switch choice {
+		case 1:
+			fmt.Println("Selected: Update the startup of already made servers to the egg startup")
+			updateServerStartup()
+		case 2:
+			fmt.Println("Running Option 2 function...")
+			os.Exit(0)	
+			// Call your specific function for Option 4 here
+		case 3:
+			fmt.Println("Exiting the program.")
+			os.Exit(0)
+		default:
+			fmt.Println("Invalid choice. Please select a valid option.")
 		}
 	}
-	
-	// Exit the program after processing rows
-	os.Exit(0)
-	// Wait for user input or signal to exit
-	select {}
 }
 
+func updateServerStartup(){
+		// Prompt for MySQL connection details
+		host := GetUserInput("Enter MySQL host ", "127.0.0.1")
+		port := GetUserInput("Enter MySQL port ", "3306")
+		user := GetUserInput("Enter MySQL username ", "pterodactyl")
+	
+		// Prompt for MySQL password
+		password := GetPasswordInput("Enter MySQL password: ")
+	
+		// Prompt for Pterodactyl database name
+		pterodactylDBName := GetUserInput("Enter Pterodactyl database name ", "panel")
+	
+		// Build the MySQL DSN (Data Source Name)
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, pterodactylDBName)
+	
+		// Connect to MySQL
+		db, err := sql.Open("mysql", dsn)
+		if err != nil {
+			log.Fatal("Error connecting to MySQL:", err)
+		}
+		defer db.Close()
+	
+		// Check if the connection is successful
+		err = db.Ping()
+		if err != nil {
+			log.Fatal("Error pinging MySQL server:", err)
+		}
+	
+		if noColor {
+			fmt.Println("Connected to MySQL server successfully!")
+		} else {
+			printFormatted(green, "Connected to MySQL server successfully!\n")
+		}
+	
+		// Prompt for egg ID
+		eggID := GetUserInput("Enter egg ID: ", "")
+	
+		// Query the startup field for the specified egg ID from the eggs table
+		eggQuery := "SELECT startup FROM eggs WHERE id = ?"
+	
+		var eggStartup string
+		err = db.QueryRow(eggQuery, eggID).Scan(&eggStartup)
+		if err != nil {
+			log.Fatal("Error retrieving startup value from eggs table:", err)
+		}
+	
+		fmt.Printf("\nStartup value for Egg ID %s: %s\n", eggID, eggStartup)
+	
+		// Query servers with the specified egg ID
+		serverQuery := "SELECT uuidShort, name, startup FROM servers WHERE egg_id = ?"
+	
+		rows, err := db.Query(serverQuery, eggID)
+		if err != nil {
+			log.Fatal("Error querying servers:", err)
+		}
+		defer rows.Close()
+	
+		fmt.Printf("Servers using Egg ID %s:\n\n", eggID)
+	
+		for rows.Next() {
+			var uuidShort, name, serverStartup string
+			if err := rows.Scan(&uuidShort, &name, &serverStartup); err != nil {
+				log.Fatal("Error scanning row:", err)
+			}
+		
+			// Compare startup value from eggs table with startup value from servers table
+			if eggStartup == serverStartup {
+				printFormatted(green, "UUID Short: %s, Name: %s, Startup Matches\n", uuidShort, name)
+			} else {
+				printFormatted(red, "UUID Short: %s, Name: %s, Startup Mismatch\n", uuidShort, name)
+		
+				// Show the difference between eggStartup and serverStartup
+				diff := difflib.UnifiedDiff{
+					A:        difflib.SplitLines(eggStartup),
+					B:        difflib.SplitLines(serverStartup),
+					FromFile: "Egg Startup",
+					ToFile:   "Server Startup",
+					Context:  3,
+				}
+		
+				diffText, _ := difflib.GetUnifiedDiffString(diff)
+				printFormatted(yellow, "Difference:\n%s", diffText)
+		
+				// Prompt the user to update the startup
+				fmt.Print("Do you want to update the startup for this server? (y/n/A): ")
+				var updateChoice string
+				fmt.Scanln(&updateChoice)
+		
+				if updateChoice == "y" || updateChoice == "Y" {
+					// Update the startup for the server with the latest one from the egg
+					updateQuery := "UPDATE servers SET startup = ? WHERE uuidShort = ?"
+					_, err := db.Exec(updateQuery, eggStartup, uuidShort)
+					if err != nil {
+						log.Fatal("Error updating startup for server:", err)
+					}
+					printFormatted(green, "Startup updated for server with UUID Short %s\n", uuidShort)
+				} else if updateChoice == "A" || updateChoice == "a" {
+					// Update the startup for all subsequent servers
+					updateQuery := "UPDATE servers SET startup = ? WHERE egg_id = ? AND startup != ?"
+					_, err := db.Exec(updateQuery, eggStartup, eggID, eggStartup)
+					if err != nil {
+						log.Fatal("Error updating startup for servers:", err)
+					}
+					printFormatted(green, "Startup updated for all subsequent servers with Egg ID %s\n", eggID)
+					break // Exit the loop after updating all servers
+				}
+			}
+		}
+		
+		// Exit the program after processing rows
+		os.Exit(0)
+}
 // printFormatted prints a formatted string with color (if enabled)
 func printFormatted(colorCode, format string, a ...interface{}) {
 	if noColor {
