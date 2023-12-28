@@ -87,39 +87,51 @@ func main() {
 	}
 }
 
+
+func connectToDatabase() (*sql.DB, error) {
+	// Prompt for MySQL connection details
+	host := GetUserInput("Enter MySQL host ", "127.0.0.1")
+	port := GetUserInput("Enter MySQL port ", "3306")
+	user := GetUserInput("Enter MySQL username ", "pterodactyl")
+
+	// Prompt for MySQL password
+	password := GetPasswordInput("Enter MySQL password:")
+
+	// Prompt for Pterodactyl database name
+	pterodactylDBName := GetUserInput("Enter Pterodactyl database name ", "panel")
+
+	// Build the MySQL DSN (Data Source Name)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, pterodactylDBName)
+
+	// Connect to MySQL
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to MySQL: %v", err)
+	}
+
+	// Check if the connection is successful
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("error pinging MySQL server: %v", err)
+	}
+
+	if noColor {
+		fmt.Println("Connected to MySQL server successfully!")
+	} else {
+		printFormatted(green, "Connected to MySQL server successfully!\n")
+	}
+
+	return db, nil
+}
+
+
 func updateServerStartup(){
-		// Prompt for MySQL connection details
-		host := GetUserInput("Enter MySQL host ", "127.0.0.1")
-		port := GetUserInput("Enter MySQL port ", "3306")
-		user := GetUserInput("Enter MySQL username ", "pterodactyl")
-	
-		// Prompt for MySQL password
-		password := GetPasswordInput("Enter MySQL password: ")
-	
-		// Prompt for Pterodactyl database name
-		pterodactylDBName := GetUserInput("Enter Pterodactyl database name ", "panel")
-	
-		// Build the MySQL DSN (Data Source Name)
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, port, pterodactylDBName)
-	
-		// Connect to MySQL
-		db, err := sql.Open("mysql", dsn)
+		// Establish database connection
+		db, err := connectToDatabase()
 		if err != nil {
-			log.Fatal("Error connecting to MySQL:", err)
+			log.Fatal(err)
 		}
 		defer db.Close()
-	
-		// Check if the connection is successful
-		err = db.Ping()
-		if err != nil {
-			log.Fatal("Error pinging MySQL server:", err)
-		}
-	
-		if noColor {
-			fmt.Println("Connected to MySQL server successfully!")
-		} else {
-			printFormatted(green, "Connected to MySQL server successfully!\n")
-		}
 	
 		// Prompt for egg ID
 		eggID := GetUserInput("Enter egg ID: ", "")
