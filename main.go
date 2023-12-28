@@ -12,7 +12,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pmezard/go-difflib/difflib"
 	"golang.org/x/crypto/ssh/terminal"
-	"github.com/common-nighthawk/go-figure"
 )
 
 func init() {
@@ -33,7 +32,7 @@ func init() {
 }
 
 var (
-	version   = "1.0.1-dev"
+	version   = "1.0.1"
 	green  = "\033[32m"
 	red    = "\033[31m"
 	yellow = "\033[33m"
@@ -45,7 +44,7 @@ var (
 
 func main() {
 
-	printCopyright("QuintenQVD0")
+	printCopyright()
 	
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
@@ -221,9 +220,19 @@ func printFormatted(colorCode, format string, a ...interface{}) {
 }
 
 // Print Copyright
-func printCopyright(text string) {
-	figure.NewFigure(text, "", true).Print()
-	fmt.Println()
+func printCopyright() {
+	
+	str := `
+	_______  __   __  ___   __    _  _______  _______  __    _  _______  __   __  ______   _______ 
+	|       ||  | |  ||   | |  |  | ||       ||       ||  |  | ||       ||  | |  ||      | |  _    |
+	|   _   ||  | |  ||   | |   |_| ||_     _||    ___||   |_| ||   _   ||  |_|  ||  _    || | |   |
+	|  | |  ||  |_|  ||   | |       |  |   |  |   |___ |       ||  | |  ||       || | |   || | |   |
+	|  |_|  ||       ||   | |  _    |  |   |  |    ___||  _    ||  |_|  ||       || |_|   || |_|   |
+	|      | |       ||   | | | |   |  |   |  |   |___ | | |   ||      |  |     | |       ||       |
+	|____||_||_______||___| |_|  |__|  |___|  |_______||_|  |__||____||_|  |___|  |______| |_______|
+																																																					 
+	`
+	fmt.Println(str)
 }
 
 // GetUserInput prompts the user for input with a given prompt and provides a default value.

@@ -51,13 +51,6 @@ jobs:
           fi
           chmod 755 dist/*
 
-      # - name: Upload Release Artifact
-      #   uses: actions/upload-artifact@v3
-      #   if: ${{ github.ref == 'refs/heads/develop' || github.event_name == 'pull_request' }}
-      #   with:
-      #     name: wings_linux_${{ matrix.goarch }}
-      #     path: dist/pssu
-
       - uses: actions/upload-artifact@v3
         if: matrix.goos == 'linux'
         with:
