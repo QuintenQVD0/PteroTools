@@ -1,4 +1,4 @@
-# Pterodactyl Tools
+# PteroTools
 
 This is a very simple Golang application that connects to the Pterodactyl panel database. Gets the startup from the provided egg ID and then see if it matches, if not you can update the startup to the current one from the egg, leave it like it is or apply the updated startup to all servers using that egg. This is mainly made for if with an egg update, the startup gets updated, and you do not want to go and manual change every startup of already running servers. It now also supports stopping stuck server transfers.
 
