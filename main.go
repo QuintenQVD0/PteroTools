@@ -32,7 +32,7 @@ func init() {
 }
 
 var (
-	version   = "1.0.1"
+	version   = "1.0.2"
 	green  = "\033[32m"
 	red    = "\033[31m"
 	yellow = "\033[33m"
@@ -59,7 +59,7 @@ func main() {
 	for {
 		fmt.Println("Select an option:")
 		fmt.Println("1. Update the startup of already made servers to the egg startup")
-		fmt.Println("2. WIP")
+		fmt.Println("2. Stop stuck server transfers")
 		fmt.Println("3. Exit")
 
 		var choice int
@@ -74,8 +74,8 @@ func main() {
 			fmt.Println("Selected: Update the startup of already made servers to the egg startup")
 			updateServerStartup()
 		case 2:
-			fmt.Println("Running Option 2 function...")
-			os.Exit(0)	
+			fmt.Println("Selected: Stop stuck server transfers")
+			stopStuckTransfers()
 			// Call your specific function for Option 4 here
 		case 3:
 			fmt.Println("Exiting the program.")
@@ -142,8 +142,8 @@ func updateServerStartup(){
 		err = db.QueryRow(eggQuery, eggID).Scan(&eggStartup)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				printFormatted(red, "Egg ID not found")
-				os.Exit(0)
+				printFormatted(red, "Egg ID not found\n")
+				return
 			} else {
 				log.Fatal("Error retrieving startup value from eggs table:", err)
 			}
@@ -165,7 +165,7 @@ func updateServerStartup(){
 				// Check if there are no servers for the specified egg ID
 		if !rows.Next() {
 			printFormatted(red, "No servers found for Egg ID %s\n", eggID)
-			os.Exit(0)
+			return
 		}
 		
 		fmt.Printf("Servers using Egg ID %s:\n\n", eggID)
@@ -223,6 +223,70 @@ func updateServerStartup(){
 		// Exit the program after processing rows
 		os.Exit(0)
 }
+
+func stopStuckTransfers() {
+		// Establish database connection
+		db, err := connectToDatabase()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+	
+		// Query for failed transfers
+		transfersQuery := "SELECT id, server_id FROM server_transfers WHERE successful IS NULL"
+		rows, err := db.Query(transfersQuery)
+		if err != nil {
+			log.Fatal("Error querying failed transfers:", err)
+		}
+		defer rows.Close()
+	
+		// Check if there are no failed transfers
+		if !rows.Next() {
+			printFormatted(red, "No stuck transfers found\n")
+			return
+		}
+	
+		fmt.Println("Stuck transfers found:\n")
+	
+		for rows.Next() {
+			var transferID, serverID string
+			if err := rows.Scan(&transferID, &serverID); err != nil {
+				log.Fatal("Error scanning row:", err)
+			}
+	
+			// Get server name from the servers table
+			serverNameQuery := "SELECT name FROM servers WHERE id = ?"
+			var serverName string
+			err := db.QueryRow(serverNameQuery, serverID).Scan(&serverName)
+			if err != nil {
+				log.Fatal("Error retrieving server name:", err)
+			}
+	
+			// Display information about the stuck transfer
+			fmt.Printf("Transfer ID: %s\n", transferID)
+			fmt.Printf("Server ID: %s\n", serverID)
+			fmt.Printf("Server Name: %s\n", serverName)
+	
+			// Prompt the user to remove the stuck transfer
+			fmt.Print("Do you want to remove this transfer? (y/n): ")
+			var removeChoice string
+			fmt.Scanln(&removeChoice)
+	
+			if removeChoice == "y" || removeChoice == "Y" {
+				// Remove the stuck transfer entry
+				removeTransferQuery := "DELETE FROM server_transfers WHERE id = ?"
+				_, err := db.Exec(removeTransferQuery, transferID)
+				if err != nil {
+					log.Fatal("Error removing transfer:", err)
+				}
+				printFormatted(green, "Transfer removed\n")
+			}
+
+		printFormatted(green, "No more stuck transfers")
+
+	}
+}
+
 // printFormatted prints a formatted string with color (if enabled)
 func printFormatted(colorCode, format string, a ...interface{}) {
 	if noColor {
