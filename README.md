@@ -19,7 +19,7 @@ This is a very simple Golang application that connects to the Pterodactyl panel 
 ## Used External Modules
 - `github.com/go-sql-driver/mysql` for connection with MySQL and running MySQL commands
 - `github.com/pmezard/go-difflib/difflib` for displaying the difference in startup
-- `golang.org/x/crypto/ssh/terminal` for securely letting you enter the MySQL password
+- `golang.org/x/term` for securely letting you enter the MySQL password
 
 ## Images
 

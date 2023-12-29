@@ -11,7 +11,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pmezard/go-difflib/difflib"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func init() {
@@ -94,7 +94,7 @@ func connectToDatabase() (*sql.DB, error) {
 	user := GetUserInput("Enter MySQL username ", "pterodactyl")
 
 	// Prompt for MySQL password
-	password := GetPasswordInput("Enter MySQL password:")
+	password := GetPasswordInput("Enter MySQL password: ")
 
 	// Prompt for Pterodactyl database name
 	pterodactylDBName := GetUserInput("Enter Pterodactyl database name ", "panel")
@@ -261,7 +261,7 @@ func GetPasswordInput(prompt string) string {
 	fmt.Print(prompt)
 
 	// Read password without showing it
-	password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+	password, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatal("Error reading password:", err)
 	}
