@@ -141,20 +141,33 @@ func updateServerStartup(){
 		var eggStartup string
 		err = db.QueryRow(eggQuery, eggID).Scan(&eggStartup)
 		if err != nil {
-			log.Fatal("Error retrieving startup value from eggs table:", err)
+			if err == sql.ErrNoRows {
+				printFormatted(red, "Egg ID not found")
+				os.Exit(0)
+			} else {
+				log.Fatal("Error retrieving startup value from eggs table:", err)
+			}
 		}
+	
 	
 		fmt.Printf("\nStartup value for Egg ID %s: %s\n", eggID, eggStartup)
 	
 		// Query servers with the specified egg ID
 		serverQuery := "SELECT uuidShort, name, startup FROM servers WHERE egg_id = ?"
 	
+
 		rows, err := db.Query(serverQuery, eggID)
 		if err != nil {
 			log.Fatal("Error querying servers:", err)
 		}
 		defer rows.Close()
 	
+				// Check if there are no servers for the specified egg ID
+		if !rows.Next() {
+			printFormatted(red, "No servers found for Egg ID %s\n", eggID)
+			os.Exit(0)
+		}
+		
 		fmt.Printf("Servers using Egg ID %s:\n\n", eggID)
 	
 		for rows.Next() {
